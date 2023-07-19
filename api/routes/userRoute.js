@@ -18,13 +18,14 @@ const upload = multer({ storage });
 //Register User
 route.post("/", upload.single("picture"), signIn);
 
-//Get User & Get, deleter or add user Friends
+//Get All Users info
 route.get("/", (req, res) => {
   User.find()
     .then((data) => res.json(data))
     .catch((error) => res.status(404).json({ message: error }));
 });
 
+//Get your User Info
 route.get("/:id", verifyToken, (req, res) => {
   const { id } = req.params;
   User.findById(id)
@@ -32,6 +33,7 @@ route.get("/:id", verifyToken, (req, res) => {
     .catch((error) => res.status(404).json({ message: error }));
 });
 
+//Get your Friends Info
 route.get("/:id/friends", verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
@@ -52,6 +54,7 @@ route.get("/:id/friends", verifyToken, async (req, res) => {
   }
 });
 
+//Add or remove a Friend
 route.patch("/:id/friendId", verifyToken, async (req, res) => {
   try {
     const { id, friendId } = req.params;
@@ -61,10 +64,23 @@ route.patch("/:id/friendId", verifyToken, async (req, res) => {
     if (user.friends.includes(friendId)) {
       user.friends = user.friends.filter((id) => id !== friendId);
       friend.friends = friend.friends.filter((id) => id !== id);
-    }else{
-      user.friends.push(friendId)
-      friend.friends.push(id)
+    } else {
+      user.friends.push(friendId);
+      friend.friends.push(id);
     }
+    await user.save();
+    await friend.save();
+
+    const friends = await Promise.all(
+      user.friends.map((id) => User.findById(id))
+    );
+
+    const format = friends.map(
+      ({ _id, firstName, lastName, occupation, location, picturePath }) => {
+        return { _id, firstName, lastName, occupation, location, picturePath };
+      }
+    );
+    res.status(200).json(format);
   } catch (error) {
     res.status(404).json({ message: error });
   }
