@@ -86,6 +86,36 @@ route.patch("/:id/friendId", verifyToken, async (req, res) => {
   }
 });
 
+// Update User
+
+route.patch("/:id", verifyToken, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const user = await User.findOneAndUpdate(
+      { _id: id },
+      {
+        $set: {
+          firstName: req.body.firstName,
+          lastName: req.body.lastName,
+          password: req.body.password,
+          picturePath: req.body.picturePath,
+          email: req.body.email,
+        },
+      },
+      { new: true }
+    );
+
+    if (!user) {
+      res.status(404).json({ message: "User Not Found" });
+      return;
+    }
+
+    res.status(200).json({ message: "User Updated!" });
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
 // Delete User
 route.delete("/:id", (req, res) => {
   const { id } = req.params;
