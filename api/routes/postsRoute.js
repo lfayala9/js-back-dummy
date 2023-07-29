@@ -18,7 +18,7 @@ const upload = multer({ storage });
 // Create Posts
 route.post("/", verifyToken, upload.single("picture"), async (req, res) => {
   try {
-    const { userId, postContent, picturePath } = req.body;
+    const { userId, postContent, picture } = req.body;
     const user = await User.findById(userId);
     const createPost = new Post({
       userId,
@@ -26,8 +26,8 @@ route.post("/", verifyToken, upload.single("picture"), async (req, res) => {
       lastName: user.lastName,
       location: user.location,
       postContent,
-      userPicturePath: user.picturePath,
-      picturePath,
+      userpicture: user.picture,
+      picture,
       likes: {},
       comments: [],
     });

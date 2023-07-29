@@ -1,22 +1,35 @@
 import express from "express";
 import User from "../models/userModel.js";
-import multer from "multer";
-import { signIn } from "../utils/authUser.js";
+// import { signIn } from "../utils/authUser.js";
 import { verifyToken } from "../middlewares/verifyToken.js";
+import bcrypt from 'bcrypt'
+import { upload } from "../config/multer.js";
+import { uploadFile } from "../utils/uploadFile.js";
 
 const route = express.Router();
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "public/assets");
-  },
-  filename: function (req, file, cb) {
-    cb(null, file.originalname);
-  },
-});
-const upload = multer({ storage });
 
 //Register User
-route.post("/", upload.single("picture"), signIn);
+route.post("/", upload.fields([{ name: 'picture', maxCount: 1 }]), async (req, res) => {
+  const body = req.body
+  const {password} = req.body
+  const picture = req.files.picture
+  const salt = await bcrypt.genSalt();
+  const passwordHash = await bcrypt.hash(password, salt);
+
+  if(picture && picture.length > 0){
+    const {downloadURL} = await uploadFile(picture[0])
+
+    const newUser = await new User({
+      firstName: body.firstName,
+      lastName: body.lastName,
+      email: body.email,
+      password: passwordHash,
+      picture: downloadURL
+    }).save()
+    return res.status(200).json({newUser})
+  }
+  return res.status(400).json({message: 'algo salio mal'})
+});
 
 //Get All Users info
 route.get("/", (req, res) => {
@@ -44,8 +57,8 @@ route.get("/:id/friends", verifyToken, async (req, res) => {
     );
 
     const format = friends.map(
-      ({ _id, firstName, lastName, occupation, location, picturePath }) => {
-        return { _id, firstName, lastName, occupation, location, picturePath };
+      ({ _id, firstName, lastName, occupation, location, picture }) => {
+        return { _id, firstName, lastName, occupation, location, picture };
       }
     );
     res.status(200).json(format);
@@ -76,8 +89,8 @@ route.patch("/:id/friendId", verifyToken, async (req, res) => {
     );
 
     const format = friends.map(
-      ({ _id, firstName, lastName, occupation, location, picturePath }) => {
-        return { _id, firstName, lastName, occupation, location, picturePath };
+      ({ _id, firstName, lastName, occupation, location, picture }) => {
+        return { _id, firstName, lastName, occupation, location, picture };
       }
     );
     res.status(200).json(format);
@@ -98,7 +111,7 @@ route.patch("/:id", verifyToken, async (req, res) => {
           firstName: req.body.firstName,
           lastName: req.body.lastName,
           password: req.body.password,
-          picturePath: req.body.picturePath,
+          picture: req.body.picture,
           email: req.body.email,
         },
       },

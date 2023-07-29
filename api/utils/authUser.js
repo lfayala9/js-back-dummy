@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 import User from "../models/userModel.js";
+import { uploadFile } from "./uploadFile.js";
 
 export const signIn = async (req, res) => {
   try {
@@ -9,54 +9,40 @@ export const signIn = async (req, res) => {
       lastName,
       email,
       password,
-      picturePath,
       friends,
       location,
       occupation,
     } = req.body;
+    const picture = req.files.picture
 
     const user = await User.findOne({ email: email });
     if (user) {
       return res.status(400).json({ message: "E-mail already exists" });
     }
-
+    
     const salt = await bcrypt.genSalt();
     const passwordHash = await bcrypt.hash(password, salt);
 
-    const newUser = new User({
-      firstName,
-      lastName,
-      email,
-      password: passwordHash,
-      picturePath,
-      friends,
-      location,
-      occupation,
-      viewedProfile: Math.floor(Math.random() * 10000),
-      impressions: Math.floor(Math.random() * 10000),
-    });
-    const savedUser = await newUser.save();
-    res.status(201).json(savedUser);
+
+    if(picture && picture.length > 0){
+      const {downloadURL} = await uploadFile(picture[0])
+
+      const newUser = await new User({
+        firstName,
+        lastName,
+        email,
+        password: passwordHash,
+        picture: downloadURL,
+        friends,
+        location,
+        occupation,
+        viewedProfile: Math.floor(Math.random() * 10000),
+        impressions: Math.floor(Math.random() * 10000),
+      }).save()
+      res.status(200).json({newUser});
+    }
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
-
-// export const login = async (req, res) => {
-//   try {
-//     const { email, password } = req.body;
-//     const user = await User.findOne({ email: email });
-//     if (!user) {
-//       return res.status(400).json({ message: "User not found" });
-//     }
-//     const matchPassword = await bcrypt.compare(password, user.password);
-//     if (!matchPassword) {
-//       res.status(400).json({ message: "Wrong Password" });
-//     }
-//     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
-//     delete user.password;
-//     res.status(200).json({ token, user });
-//   } catch (err) {
-//     res.status(500).json({ error: err.message });
-//   }
-// };
