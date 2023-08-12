@@ -1,39 +1,51 @@
 import express from "express";
-import multer from "multer";
 import User from "../models/userModel.js";
 import Post from "../models/postModel.js";
 import { verifyToken } from "../middlewares/verifyToken.js";
+import { upload } from "../config/multer.js";
+import { uploadFile } from "../utils/uploadFile.js";
 
 const route = express.Router();
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "public/assets");
-  },
-  filename: function (req, file, cb) {
-    cb(null, file.originalname);
-  },
-});
-const upload = multer({ storage });
 
 // Create Posts
-route.post("/", verifyToken, upload.single("picture"), async (req, res) => {
+route.post("/", verifyToken, upload.fields([{ name: "picture", maxCount: 1 }]), async (req, res) => {
+  const { userId, postContent } = req.body;
+  const picture = req.files.picture;
+  const user = await User.findById(userId);
   try {
-    const { userId, postContent, picture } = req.body;
-    const user = await User.findById(userId);
-    const createPost = new Post({
-      userId,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      location: user.location,
-      postContent,
-      userpicture: user.picture,
-      picture,
-      likes: {},
-      comments: [],
-    });
-    await createPost.save();
-    const post = await Post.find();
-    res.status(201).json(post);
+    if(picture && picture.length > 0){
+      const { downloadURL } = await uploadFile(picture[0]);
+
+      const createPost = new Post({
+        userId,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        location: user.location,
+        postContent,
+        userPicture: user.picture,
+        picture: downloadURL,
+        likes: {},
+        comments: [],
+      });
+      await createPost.save();
+      const post = await Post.find();
+      res.status(201).json(post);
+    } else {
+      const createPost = new Post({
+        userId,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        location: user.location,
+        postContent,
+        userPicture: user.picture,
+        picture,
+        likes: {},
+        comments: [],
+      });
+      await createPost.save();
+      const post = await Post.find();
+      res.status(201).json(post);
+    }
   } catch (error) {
     res.status(409).json({ message: error.message });
   }
@@ -83,6 +95,15 @@ route.patch("/:id/like", verifyToken, async (req, res) => {
   } catch (error) {
     res.status(409).json({ message: error.message });
   }
+});
+
+//Delete Post
+
+route.delete("/:id", (req, res) => {
+  const { id } = req.params;
+  Post.findByIdAndRemove(id)
+    .then((data) => res.json(data))
+    .catch((error) => res.status(404).json({ message: error }));
 });
 
 export default route

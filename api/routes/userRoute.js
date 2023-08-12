@@ -2,34 +2,48 @@ import express from "express";
 import User from "../models/userModel.js";
 // import { signIn } from "../utils/authUser.js";
 import { verifyToken } from "../middlewares/verifyToken.js";
-import bcrypt from 'bcrypt'
+import bcrypt from "bcrypt";
 import { upload } from "../config/multer.js";
 import { uploadFile } from "../utils/uploadFile.js";
 
 const route = express.Router();
 
 //Register User
-route.post("/", upload.fields([{ name: 'picture', maxCount: 1 }]), async (req, res) => {
-  const body = req.body
-  const {password} = req.body
-  const picture = req.files.picture
-  const salt = await bcrypt.genSalt();
-  const passwordHash = await bcrypt.hash(password, salt);
+route.post(
+  "/",
+  upload.fields([{ name: "picture", maxCount: 1 }]),
+  async (req, res) => {
+    const body = req.body;
+    const { password } = req.body;
+    const picture = req.files.picture;
+    const salt = await bcrypt.genSalt();
+    const passwordHash = await bcrypt.hash(password, salt);
+    try {
+      if (picture && picture.length > 0) {
+        const { downloadURL } = await uploadFile(picture[0]);
 
-  if(picture && picture.length > 0){
-    const {downloadURL} = await uploadFile(picture[0])
-
-    const newUser = await new User({
-      firstName: body.firstName,
-      lastName: body.lastName,
-      email: body.email,
-      password: passwordHash,
-      picture: downloadURL
-    }).save()
-    return res.status(200).json({newUser})
+        const newUser = await new User({
+          firstName: body.firstName,
+          lastName: body.lastName,
+          email: body.email,
+          password: passwordHash,
+          picture: downloadURL,
+        }).save();
+        return res.status(200).json({ newUser });
+      } else {
+        const newUser = await new User({
+          firstName: body.firstName,
+          lastName: body.lastName,
+          email: body.email,
+          password: passwordHash,
+        }).save();
+        return res.status(200).json({ newUser });
+      }
+    } catch (error) {
+      return res.status(400).json({ message: error.message });
+    }
   }
-  return res.status(400).json({message: 'algo salio mal'})
-});
+);
 
 //Get All Users info
 route.get("/", (req, res) => {
