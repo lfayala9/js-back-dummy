@@ -4,7 +4,7 @@ import Post from "../models/postModel.js";
 import { verifyToken } from "../middlewares/verifyToken.js";
 import { upload } from "../config/multer.js";
 import { uploadFile } from "../utils/uploadFile.js";
-
+import { io } from "../index.js";
 const route = express.Router();
 
 // Create Posts
@@ -30,6 +30,8 @@ route.post("/", verifyToken, upload.fields([{ name: "picture", maxCount: 1 }]), 
       await createPost.save();
       const post = await Post.find();
       res.status(201).json(post);
+      io.emit("new-post", createPost);
+      console.log("New post created: " + createPost.id);
     } else {
       const createPost = new Post({
         userId,
@@ -45,6 +47,8 @@ route.post("/", verifyToken, upload.fields([{ name: "picture", maxCount: 1 }]), 
       await createPost.save();
       const post = await Post.find();
       res.status(201).json(post);
+      io.emit("new-post", createPost);
+      console.log("New post created: " + createPost.id);
     }
   } catch (error) {
     res.status(409).json({ message: error.message });

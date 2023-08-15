@@ -8,6 +8,8 @@ import helmet from "helmet";
 import morgan from "morgan";
 import { fileURLToPath } from "url";
 import "dotenv/config";
+import http from 'http'
+import { Server } from "socket.io";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,6 +17,11 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const uri = process.env.MONGO_URL;
 const port = process.env.PORT;
+const server = http.createServer(app)
+export const io = new Server(server, {
+  cors: { origin: '*' }
+});
+
 // Middlewares
 app.use(helmet());
 app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
@@ -30,6 +37,13 @@ app.get("/", (req, res) => {
   res.send(`<h1>Fake Social app server</h1>`);
 });
 
+io.on('connection', (socket) => {
+  console.log('a user connected');
+  socket.on('new-post', () => {
+    console.log('nuevo post!')
+  })
+});
+
 routerAPI(app);
 
 //DB Connection
@@ -41,6 +55,10 @@ mongoose
   .then(() => console.log("good"))
   .catch((error) => console.log(error));
 
-app.listen(port, () => {
+// app.listen(port, () => {
+//   console.log(`this is the port ${port}`);
+// });
+
+server.listen(port, () => {
   console.log(`this is the port ${port}`);
 });
