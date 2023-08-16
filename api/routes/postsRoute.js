@@ -109,7 +109,7 @@ route.delete("/:id", (req, res) => {
     .then((data) => res.json(data))
     .catch((error) => res.status(404).json({ message: error }));
   
-  io.emit("deleted-post");
+  io.emit("deleted-post", id);
   console.log("Post deleted: " + id);
 });
 
