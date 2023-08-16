@@ -108,6 +108,9 @@ route.delete("/:id", (req, res) => {
   Post.findByIdAndRemove(id)
     .then((data) => res.json(data))
     .catch((error) => res.status(404).json({ message: error }));
+  
+  io.emit("deleted-post");
+  console.log("Post deleted: " + id);
 });
 
 export default route
