@@ -66,7 +66,7 @@ route.get("/", verifyToken, async (req, res) => {
 });
 
 //Get a user posts
-route.get("/:id", verifyToken, async (req, res) => {
+route.get("/by/:userId", verifyToken, async (req, res) => {
   try {
     const { userId } = req.params;
     const post = await Post.find({ userId });
@@ -106,11 +106,14 @@ route.patch("/:id/like", verifyToken, async (req, res) => {
 route.delete("/:id", (req, res) => {
   const { id } = req.params;
   Post.findByIdAndRemove(id)
-    .then((data) => res.json(data))
+    .then((data) => {
+      res.json(data)
+    })
     .catch((error) => res.status(404).json({ message: error }));
   
   io.emit("deleted-post", id);
   console.log("Post deleted: " + id);
+
 });
 
 export default route
