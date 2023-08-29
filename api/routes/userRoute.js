@@ -82,7 +82,7 @@ route.get("/:id/friends", verifyToken, async (req, res) => {
 });
 
 //Add or remove a Friend
-route.patch("/:id/friendId", verifyToken, async (req, res) => {
+route.patch("/:id/:friendId", verifyToken, async (req, res) => {
   try {
     const { id, friendId } = req.params;
     const user = await User.findById(id);
