@@ -1,10 +1,10 @@
 import express from "express";
 import User from "../models/userModel.js";
-// import { signIn } from "../utils/authUser.js";
 import { verifyToken } from "../middlewares/verifyToken.js";
 import bcrypt from "bcrypt";
 import { upload } from "../config/multer.js";
 import { uploadFile } from "../utils/uploadFile.js";
+import { io } from "../index.js";
 
 const route = express.Router();
 
@@ -91,9 +91,13 @@ route.patch("/:id/:friendId", verifyToken, async (req, res) => {
     if (user.friends.includes(friendId)) {
       user.friends = user.friends.filter((id) => id !== friendId);
       friend.friends = friend.friends.filter((id) => id !== id);
+      io.emit("deleted-friend", friendId);
+      console.log('deleted')
     } else {
       user.friends.push(friendId);
       friend.friends.push(id);
+      io.emit("added-friend", friendId);
+      console.log('added')
     }
     await user.save();
     await friend.save();

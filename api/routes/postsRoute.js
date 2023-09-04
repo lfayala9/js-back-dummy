@@ -4,56 +4,62 @@ import Post from "../models/postModel.js";
 import { verifyToken } from "../middlewares/verifyToken.js";
 import { upload } from "../config/multer.js";
 import { uploadFile } from "../utils/uploadFile.js";
+import deleteImg from "../utils/deleteFile.js";
 import { io } from "../index.js";
 const route = express.Router();
 
 // Create Posts
-route.post("/", verifyToken, upload.fields([{ name: "picture", maxCount: 1 }]), async (req, res) => {
-  const { userId, postContent } = req.body;
-  const picture = req.files.picture;
-  const user = await User.findById(userId);
-  try {
-    if(picture && picture.length > 0){
-      const { downloadURL } = await uploadFile(picture[0]);
+route.post(
+  "/",
+  verifyToken,
+  upload.fields([{ name: "picture", maxCount: 1 }]),
+  async (req, res) => {
+    const { userId, postContent } = req.body;
+    const picture = req.files.picture;
+    const user = await User.findById(userId);
+    try {
+      if (picture && picture.length > 0) {
+        const { downloadURL } = await uploadFile(picture[0]);
 
-      const createPost = new Post({
-        userId,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        location: user.location,
-        postContent,
-        userPicture: user.picture,
-        picture: downloadURL,
-        likes: {},
-        comments: [],
-      });
-      await createPost.save();
-      const post = await Post.find();
-      res.status(201).json(post);
-      io.emit("new-post", createPost);
-      console.log("New post created: " + createPost.id);
-    } else {
-      const createPost = new Post({
-        userId,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        location: user.location,
-        postContent,
-        userPicture: user.picture,
-        picture,
-        likes: {},
-        comments: [],
-      });
-      await createPost.save();
-      const post = await Post.find();
-      res.status(201).json(post);
-      io.emit("new-post", createPost);
-      console.log("New post created: " + createPost.id);
+        const createPost = new Post({
+          userId,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          location: user.location,
+          postContent,
+          userPicture: user.picture,
+          picture: downloadURL,
+          likes: {},
+          comments: [],
+        });
+        await createPost.save();
+        const post = await Post.find();
+        res.status(201).json(post);
+        io.emit("new-post", createPost);
+        console.log("New post created: " + createPost.id);
+      } else {
+        const createPost = new Post({
+          userId,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          location: user.location,
+          postContent,
+          userPicture: user.picture,
+          picture,
+          likes: {},
+          comments: [],
+        });
+        await createPost.save();
+        const post = await Post.find();
+        res.status(201).json(post);
+        io.emit("new-post", createPost);
+        console.log("New post created: " + createPost.id);
+      }
+    } catch (error) {
+      res.status(409).json({ message: error.message });
     }
-  } catch (error) {
-    res.status(409).json({ message: error.message });
   }
-});
+);
 
 // Get all posts
 route.get("/", verifyToken, async (req, res) => {
@@ -91,10 +97,10 @@ route.patch("/:id/like", verifyToken, async (req, res) => {
     }
 
     const updatedPost = await Post.findByIdAndUpdate(
-        id,
-        {likes: post.likes},
-        {new: true}
-    )
+      id,
+      { likes: post.likes },
+      { new: true }
+    );
     res.status(200).json(updatedPost);
   } catch (error) {
     res.status(409).json({ message: error.message });
@@ -107,13 +113,17 @@ route.delete("/:id", (req, res) => {
   const { id } = req.params;
   Post.findByIdAndRemove(id)
     .then((data) => {
-      res.json(data)
+      if (data.picture) {
+        deleteImg(data.picture);
+        console.log("Deleted post with picture");
+        res.json(data);
+      } else {
+        res.json(data);
+      }
     })
     .catch((error) => res.status(404).json({ message: error }));
-  
+  console.log("Deleted Post:", id);
   io.emit("deleted-post", id);
-  console.log("Post deleted: " + id);
-
 });
 
-export default route
+export default route;
