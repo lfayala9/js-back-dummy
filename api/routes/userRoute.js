@@ -4,6 +4,7 @@ import { verifyToken } from "../middlewares/verifyToken.js";
 import bcrypt from "bcrypt";
 import { upload } from "../config/multer.js";
 import { uploadFile } from "../utils/uploadFile.js";
+import deleteImg from "../utils/deleteFile.js";
 import { io } from "../index.js";
 
 const route = express.Router();
@@ -91,13 +92,11 @@ route.patch("/:id/:friendId", verifyToken, async (req, res) => {
     if (user.friends.includes(friendId)) {
       user.friends = user.friends.filter((id) => id !== friendId);
       friend.friends = friend.friends.filter((id) => id !== id);
-      io.emit("deleted-friend", friendId);
-      console.log('deleted')
+      io.emit("deleted-friend", friend);
     } else {
       user.friends.push(friendId);
       friend.friends.push(id);
-      io.emit("added-friend", friendId);
-      console.log('added')
+      io.emit("added-friend", friend);
     }
     await user.save();
     await friend.save();
@@ -151,7 +150,15 @@ route.patch("/:id", verifyToken, async (req, res) => {
 route.delete("/:id", (req, res) => {
   const { id } = req.params;
   User.findByIdAndRemove(id)
-    .then((data) => res.json(data))
+    .then((data) => {
+      if (data.picture) {
+        deleteImg(data.picture);
+        console.log("Deleted post with picture");
+        res.json(data);
+      } else {
+        res.json(data);
+      }
+    })
     .catch((error) => res.status(404).json({ message: error }));
 });
 export default route;
