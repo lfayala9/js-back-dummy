@@ -4,6 +4,7 @@ import bodyParser from "body-parser";
 import routerAPI from "./routes/index.js";
 import cors from "cors";
 import path from "path";
+import compression from "compression";
 import helmet from "helmet";
 import morgan from "morgan";
 import { fileURLToPath } from "url";
@@ -23,6 +24,7 @@ export const io = new Server(server, {
 });
 
 // Middlewares
+app.use(compression());
 app.use(helmet());
 app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 app.use(morgan("common"));
