@@ -1,15 +1,20 @@
 import { ref, getDownloadURL, uploadBytesResumable } from "firebase/storage";
 import { storage } from "../config/firebase.js";
+import sharp from "sharp";
 
 export async function uploadFile(file) {
-  const fileRef = ref(storage, `files/${file.originalname} ${Date.now()}`);
+  const webpImage = await sharp(file.buffer)
+    .resize({ width: 700 })
+    .toBuffer();
+  const fileRef = ref(storage, `files/${file.originalname}${Date.now()}.webp`);
   const fileMetadata = {
     contentType: file.mimetype,
   };
+
   const fileUploadPromise = uploadBytesResumable(
     fileRef,
-    file.buffer,
-    fileMetadata,
+    webpImage,
+    fileMetadata
   );
 
   await fileUploadPromise;

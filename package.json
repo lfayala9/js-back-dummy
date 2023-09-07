@@ -24,7 +24,6 @@
   },
   "homepage": "https://github.com/lfayala9/social-back#readme",
   "dependencies": {
-    "@hapi/boom": "^10.0.1",
     "bcrypt": "^5.1.0",
     "body-parser": "^1.20.2",
     "compression": "^1.7.4",
