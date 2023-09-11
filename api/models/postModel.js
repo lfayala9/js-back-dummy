@@ -22,6 +22,10 @@ const postSchema = mongoose.Schema(
       type: Map,
       of: Boolean,
     },
+    friends: {
+      type: Array,
+      default: [],
+    },
     comments: {
       type: Array,
       default: [],

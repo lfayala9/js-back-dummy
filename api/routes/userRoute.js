@@ -21,7 +21,7 @@ route.post(
     const passwordHash = await bcrypt.hash(password, salt);
     try {
       if (picture && picture.length > 0) {
-        const { downloadURL } = await uploadFile(picture[0]);
+        const { downloadURL } = await uploadFile(picture[0], 350);
 
         const newUser = await new User({
           firstName: body.firstName,
@@ -72,8 +72,8 @@ route.get("/:id/friends", verifyToken, async (req, res) => {
     );
 
     const format = friends.map(
-      ({ _id, firstName, lastName, occupation, location, picture }) => {
-        return { _id, firstName, lastName, occupation, location, picture };
+      ({ _id, firstName, lastName, picture }) => {
+        return { _id, firstName, lastName, picture };
       }
     );
     res.status(200).json(format);
@@ -88,7 +88,7 @@ route.patch("/:id/:friendId", verifyToken, async (req, res) => {
     const { id, friendId } = req.params;
     const user = await User.findById(id);
     const friend = await User.findById(friendId);
-
+    
     if (user.friends.includes(friendId)) {
       user.friends = user.friends.filter((id) => id !== friendId);
       friend.friends = friend.friends.filter((id) => id !== id);

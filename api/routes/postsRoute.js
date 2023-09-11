@@ -19,7 +19,7 @@ route.post(
     const user = await User.findById(userId);
     try {
       if (picture && picture.length > 0) {
-        const { downloadURL } = await uploadFile(picture[0]);
+        const { downloadURL } = await uploadFile(picture[0], 700);
 
         const createPost = new Post({
           userId,
@@ -29,6 +29,7 @@ route.post(
           postContent,
           userPicture: user.picture,
           picture: downloadURL,
+          friends: user.friends,
           likes: {},
           comments: [],
         });
@@ -45,6 +46,7 @@ route.post(
           location: user.location,
           postContent,
           userPicture: user.picture,
+          friends: user.friends,
           picture,
           likes: {},
           comments: [],
@@ -70,6 +72,17 @@ route.get("/", verifyToken, async (req, res) => {
     res.status(409).json({ message: error.message });
   }
 });
+//Get single post
+
+route.get("/:id", verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const post = await Post.findById(id);
+    res.status(200).json(post);
+  } catch (error) {
+    res.status(409).json({ message: error.message });
+  }
+});
 
 //Get a user posts
 route.get("/by/:userId", verifyToken, async (req, res) => {
@@ -83,17 +96,21 @@ route.get("/by/:userId", verifyToken, async (req, res) => {
 });
 
 //Like Post
-route.patch("/:id/like", verifyToken, async (req, res) => {
+route.patch("/:id/like/:userId", verifyToken, async (req, res) => {
+  const { id } = req.params;
+  const { userId } = req.params;
   try {
-    const { id } = req.params;
-    const { userId } = req.body;
     const post = await Post.findById(id);
     const liked = post.likes.get(userId);
 
     if (liked) {
       post.likes.delete(userId);
+      io.emit("unlike-post", id)
+      console.log('unlike')
     } else {
       post.likes.set(userId, true);
+      io.emit("like-post", id);
+      console.log('like')
     }
 
     const updatedPost = await Post.findByIdAndUpdate(

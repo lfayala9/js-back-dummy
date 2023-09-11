@@ -39,13 +39,6 @@ app.get("/", (req, res) => {
   res.send(`<h1>Fake Social app server</h1>`);
 });
 
-io.on('connection', (socket) => {
-  console.log('a user connected');
-  socket.on('new-post', () => {
-    console.log('nuevo post!')
-  })
-});
-
 routerAPI(app);
 
 //DB Connection
@@ -56,10 +49,6 @@ mongoose
   })
   .then(() => console.log("good"))
   .catch((error) => console.log(error));
-
-// app.listen(port, () => {
-//   console.log(`this is the port ${port}`);
-// });
 
 server.listen(port, () => {
   console.log(`this is the port ${port}`);
