@@ -1,11 +1,15 @@
 import mongoose from "mongoose";
 
-const postSchema = mongoose.Schema(
+const commentSchema = mongoose.Schema(
   {
     userId: {
       type: String,
       required: true,
     },
+    postId: {
+        type: String,
+        required: true,
+      },
     firstName: {
       type: String,
       required: true,
@@ -14,22 +18,17 @@ const postSchema = mongoose.Schema(
       type: String,
       required: true,
     },
-    location: String,
-    postContent: String,
     picture: String,
     userPicture: String,
+    commentContent: String,
     likes: {
       type: Map,
       of: Boolean,
-    },
-    comments: {
-      type: Array,
-      default: [],
     },
   },
   { timestamps: true }
 );
 
-const Post = mongoose.model("Post", postSchema);
+const Comment = mongoose.model("Comment", commentSchema);
 
-export default Post;
+export default Comment;
