@@ -142,7 +142,8 @@ route.post("/:postId/comment/",  upload.fields([{ name: "picture", maxCount: 1 }
         lastName: user.lastName,
         userPicture: user.picture,
         commentContent,
-        picture: downloadURL
+        picture: downloadURL,
+        likes
       });
       post.comments.push(comment);
       await post.save();
@@ -156,6 +157,7 @@ route.post("/:postId/comment/",  upload.fields([{ name: "picture", maxCount: 1 }
         lastName: user.lastName,
         userPicture: user.picture,
         commentContent,
+        likes,
         picture
       });
       post.comments.push(comment);
@@ -167,7 +169,7 @@ route.post("/:postId/comment/",  upload.fields([{ name: "picture", maxCount: 1 }
   }
 });
 
-//Get Posts comments
+//Get Post comments
 
 route.get("/:postId/comments", verifyToken, async (req, res) => {
   try {
