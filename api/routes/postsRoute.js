@@ -72,6 +72,7 @@ route.get("/", verifyToken, async (req, res) => {
     res.status(409).json({ message: error.message });
   }
 });
+
 //Get single post
 
 route.get("/:id", verifyToken, async (req, res) => {
@@ -104,7 +105,6 @@ route.patch("/:id/like/:userId", verifyToken, async (req, res) => {
   try {
     const post = await Post.findById(id);
     const liked = post.likes.get(userId);
-
     if (liked) {
       post.likes.delete(userId);
       io.emit("unlike-post", id);
@@ -121,100 +121,6 @@ route.patch("/:id/like/:userId", verifyToken, async (req, res) => {
     res.status(200).json(updatedPost);
   } catch (error) {
     res.status(409).json({ message: error.message });
-  }
-});
-
-//Comment Post
-
-route.post("/:postId/comment/",  upload.fields([{ name: "picture", maxCount: 1 }]), verifyToken, async (req, res) => {
-  const { postId } = req.params;
-  const { commentContent, userId } = req.body;
-  const picture = req.files.picture;
-  const user = await User.findById(userId);
-  try {
-    if (picture && picture.length > 0) {
-      const { downloadURL } = await uploadFile(picture[0], 700);
-      const post = await Post.findById(postId);
-      const comment = new Comment({
-        userId,
-        postId,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        userPicture: user.picture,
-        commentContent,
-        picture: downloadURL,
-        likes
-      });
-      post.comments.push(comment);
-      await post.save();
-      res.status(201).json(comment);
-    }else{
-      const post = await Post.findById(postId);
-      const comment = new Comment({
-        userId,
-        postId,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        userPicture: user.picture,
-        commentContent,
-        likes,
-        picture
-      });
-      post.comments.push(comment);
-      await post.save();
-      res.status(201).json(comment);
-    }
-  } catch (error) {
-    res.status(409).json({ message: error.message });
-  }
-});
-
-//Get Post comments
-
-route.get("/:postId/comments", verifyToken, async (req, res) => {
-  try {
-    const { postId } = req.params;
-    const post = await Post.findById(postId);
-    res.status(202).json(post.comments);
-  } catch (error) {
-    res.status(409).json({ message: error.message });
-  }
-});
-
-// Get single comment
-
-route.get("/:postId/comments/:commentId", verifyToken, async (req, res) => {
-  const { postId, commentId } = req.params;
-  const post = await Post.findById(postId);
-  const comments = post.comments;
-
-  const comment = comments.find(
-    (comment) => comment._id.toString() === commentId
-  );
-  if (comment) {
-    res.status(200).json(comment);
-  } else {
-    res.status(404).json({ message: "Comment not found" });
-  }
-});
-
-// Delete comment from post
-
-route.delete("/:postId/comments/:commentId", verifyToken, async (req, res) => {
-  const { postId, commentId } = req.params;
-  const post = await Post.findById(postId);
-  const comments = post.comments;
-
-  const commentToDelete = comments.find(
-    (comment) => comment._id.toString() === commentId
-  );
-
-  if (commentToDelete) {
-    comments.splice(comments.indexOf(commentToDelete), 1);
-    await Post.findByIdAndUpdate(postId, { comments: comments }, { new: true });
-    res.status(200).json(comments);
-  } else {
-    res.status(404).json({ message: "Comment not found" });
   }
 });
 
@@ -235,6 +141,25 @@ route.delete("/:id", (req, res) => {
     .catch((error) => res.status(404).json({ message: error }));
   console.log("Deleted Post:", id);
   io.emit("deleted-post", id);
+});
+
+route.delete("/:postId/:commentId", verifyToken, async (req, res) => {
+  const { postId } = req.params;
+  const { commentId } = req.params;
+
+  try {
+    await Comment.findByIdAndRemove(commentId);
+    const post = await Post.findById(postId);
+    const updatedPost = await Post.findByIdAndUpdate(
+      postId,
+      { comments: post.comments.filter((c) => c._id.toString() !== commentId) },
+      { new: true }
+    );
+    res.status(200).json(updatedPost);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+  io.emit("deleted-comment", commentId);
 });
 
 export default route;
