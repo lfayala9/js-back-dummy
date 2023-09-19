@@ -37,6 +37,7 @@ route.post(
         const post = await Post.find();
         res.status(201).json(post);
         io.emit("new-post", createPost);
+        io.close()
         console.log("New post created: " + createPost.id);
       } else {
         const createPost = new Post({
@@ -126,8 +127,9 @@ route.patch("/:id/like/:userId", verifyToken, async (req, res) => {
 
 //Delete Post
 
-route.delete("/:id", (req, res) => {
+route.delete("/:id", async (req, res) => {
   const { id } = req.params;
+  await Comment.deleteMany({ postId: id });
   Post.findByIdAndRemove(id)
     .then((data) => {
       if (data.picture) {
@@ -142,6 +144,8 @@ route.delete("/:id", (req, res) => {
   console.log("Deleted Post:", id);
   io.emit("deleted-post", id);
 });
+
+// Delete Comment
 
 route.delete("/:postId/:commentId", verifyToken, async (req, res) => {
   const { postId } = req.params;

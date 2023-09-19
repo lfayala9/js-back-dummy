@@ -17,7 +17,7 @@ route.post(
   verifyToken,
   async (req, res) => {
     const { postId } = req.params;
-    const { commentContent, userId } = req.body;
+    const { postContent, userId } = req.body;
     const picture = req.files.picture;
     const user = await User.findById(userId);
     try {
@@ -30,7 +30,7 @@ route.post(
           firstName: user.firstName,
           lastName: user.lastName,
           userPicture: user.picture,
-          commentContent,
+          postContent,
           likes: {},
           picture: downloadURL,
         });
@@ -47,7 +47,7 @@ route.post(
           firstName: user.firstName,
           lastName: user.lastName,
           userPicture: user.picture,
-          commentContent,
+          postContent,
           likes: {},
           picture,
         });
