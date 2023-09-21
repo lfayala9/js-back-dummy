@@ -53,7 +53,7 @@ route.get("/", (req, res) => {
     .catch((error) => res.status(404).json({ message: error }));
 });
 
-//Get your User Info
+//Get User Info
 route.get("/:id", verifyToken, (req, res) => {
   const { id } = req.params;
   User.findById(id)
@@ -61,7 +61,7 @@ route.get("/:id", verifyToken, (req, res) => {
     .catch((error) => res.status(404).json({ message: error }));
 });
 
-//Get your Friends Info
+//Get user Friends Info
 route.get("/:id/friends", verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
