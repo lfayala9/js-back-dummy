@@ -5,7 +5,7 @@ import bcrypt from "bcrypt";
 import { upload } from "../config/multer.js";
 import { uploadFile } from "../utils/uploadFile.js";
 import deleteImg from "../utils/deleteFile.js";
-import { io } from "../index.js";
+import { io } from "./../../index.js";
 
 const route = express.Router();
 

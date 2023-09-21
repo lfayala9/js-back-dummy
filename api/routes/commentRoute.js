@@ -5,7 +5,7 @@ import Comment from "../models/commentModel.js";
 import { verifyToken } from "../middlewares/verifyToken.js";
 import { upload } from "../config/multer.js";
 import { uploadFile } from "../utils/uploadFile.js";
-import { io } from "../index.js";
+import { io } from "./../../index.js";
 
 const route = express.Router();
 
