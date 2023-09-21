@@ -5,7 +5,6 @@ import routerAPI from "./api/routes/index.js";
 import cors from "cors";
 import path from "path";
 import compression from "compression";
-import helmet from "helmet";
 import morgan from "morgan";
 import { fileURLToPath } from "url";
 import "dotenv/config";
@@ -25,8 +24,6 @@ export const io = new Server(server, {
 
 // Middlewares
 app.use(compression());
-app.use(helmet());
-app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 app.use(morgan("common"));
 app.use(bodyParser.json({ limit: "30mb", extended: true }));
 app.use(bodyParser.urlencoded({ limit: "30mb", extended: true }));
