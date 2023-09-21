@@ -21,7 +21,7 @@ const uri = process.env.MONGO_URL;
 const port = process.env.PORT;
 const server = http.createServer(app)
 export const io = new Server(server, {
-  cors: { origin: '*' }
+  cors: { origin: '*', credentials: true }
 });
 
 // Middlewares
